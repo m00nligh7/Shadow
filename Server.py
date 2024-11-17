@@ -30,7 +30,7 @@ def handle_client(client_socket):
         finally:
             client_socket.close()
             if client_socket in clients:
-                broadcast(f"{clients[client_socket]} покинул чат :()".encode('utf-8'))
+                broadcast(f"{clients[client_socket]} покинул чат :(".encode('utf-8'), client_socket)
                 del clients[client_socket]
 
 def main():
