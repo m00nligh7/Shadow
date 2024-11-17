@@ -1,7 +1,7 @@
 import socket
 import threading
 
-clients = []
+clients = {}
 
 def broadcast(message, client_socket):
     for client in clients:
@@ -10,19 +10,28 @@ def broadcast(message, client_socket):
                 client.send(message)
             except:
                 client.close()
-                clients.remove(client)
+                del clients[client]
 
 def handle_client(client_socket):
     while True:
         try:
-            message = client_socket.recv(1024)
-            if not message:
-                break
-            broadcast(message, client_socket)
+            nickname = client_socket.recv(1024).decode('utf-8')
+            clients[client_socket] = nickname
+            broadcast(f"{nickname} успешно присоединился к чату! Скажите {nickname} привет!".encode('utf-8'), client_socket)
+            
+            while True:
+                message = client_socket.recv(1024)
+                if not message:
+                    break
+                frmt_msg = f"{nickname}: {message.decode("utf-8")}".encode('utf-8')
+                broadcast(frmt_msg, client_socket)
         except:
+            pass
+        finally:
             client_socket.close()
-            clients.remove(client_socket)
-            break
+            if client_socket in clients:
+                broadcast(f"{clients[client_socket]} покинул чат :()".encode('utf-8'))
+                del clients[client_socket]
 
 def main():
     global hostname
@@ -34,9 +43,7 @@ def main():
 
     while True:
         client_socket, client_addr = server_socket.accept()
-        hostname = client_addr
-        clients.append(client_socket)
-        print(f"Got connection from {client_addr} with nickname - ")
+        print(f"Соединение со стороны - {client_addr}")
         client_hndlr = threading.Thread(target=handle_client, args=(client_socket,))
         client_hndlr.start()
 
