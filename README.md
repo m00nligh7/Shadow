@@ -27,10 +27,10 @@ ShadowTalk is secure, privacy and confidence messenger, what keeps your chats an
    
 `pip3 install -r requirements.txt`
 
-8) Try to launch server side(Server.py) and try to use chat using client side(Client.py)
+8) Try to launch server side(Server.py) and try to use messenger using client side(Client.py)
    
 `python Server.py` or `python Client.py`
 
 **For Windows**
 
-My Chat is not tested on Windows yet. May not work right now
+My project is not tested on Windows yet. May not work right now
