@@ -1,5 +1,5 @@
-# ShadowTalk
-ShadowTalk is secure, privacy and confidence messenger, what keeps your chats and no one have access to them.
+# Shadow
+Shadow is secure, privacy and confidence messenger, what keeps your chats and no one have access to them.
 
 # Installing and launching server and chat side
 
@@ -17,11 +17,11 @@ ShadowTalk is secure, privacy and confidence messenger, what keeps your chats an
 
 2) Clone the repo
    
-`git clone https://github.com/m00nligh7/ShadowTalk`
+`git clone https://github.com/m00nligh7/Shadow`
 
 4) Open the folder in terminal
    
-`cd ShadowTalk`
+`cd Shadow`
 
 6) Install required packages
    
