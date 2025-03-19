@@ -7,14 +7,18 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import os
 import queue
 
-# Глобальные переменные
 ui_nickname = ""
 loginwarning_counter = True
+loginipportwarning_counter = True
 private_key = None
 server_public_key = None
 aes_key = None
+ip = None
+port = None
+selected_client = None
+current_client_list = []
+client_list_frame = None 
 
-# Очередь для передачи сообщений между потоками
 message_queue = queue.Queue()
 
 def generate_rsa_keys():
@@ -68,18 +72,40 @@ def decrypt_rsa(encrypted_data, private_key):
         )
     )
 
+
 def get_nickname_ui():
-    global nick_entry, client_socket, ui_nickname, loginwarning_counter, txtwarning, aes_key
+    global nick_entry, ip_entry, port_entry, client_socket, ui_nickname, loginwarning_counter, \
+    txtwarning, aes_key, loginipportwarning_counter, ip, port
     nickname = str(nick_entry.get())
-    if nickname == "":
+    ip = str(ip_entry.get())
+    port = str(port_entry.get())
+    if (ip == "" or port == "") and nickname == "":
+        if loginipportwarning_counter == True and loginwarning_counter == True:
+            txtwarningipport = customtkinter.CTkLabel(master=login, text="IP or Port were entered incorrectly", text_color="red")
+            txtwarningipport.pack(fill=customtkinter.BOTH, padx=10, pady=(10, 10))
+            loginipportwarning_counter = False
+            txtwarning = customtkinter.CTkLabel(master=login, text="An empty nickname cannot be used", text_color="red")
+            txtwarning.pack(fill=customtkinter.BOTH, padx=10, pady=(10, 10))
+            loginwarning_counter = False
+        else:
+            print("Warning is already visible")
+    elif ip == "" or port == "":
+        if loginipportwarning_counter == True:
+            txtwarningipport = customtkinter.CTkLabel(master=login, text="IP or Port were entered incorrectly", text_color="red")
+            txtwarningipport.pack(fill=customtkinter.BOTH, padx=10, pady=(10, 10))
+            loginipportwarning_counter = False
+        else:
+            print("Warning is already visible")
+    elif (nickname == ""):
         if loginwarning_counter == True:
-            txtwarning = customtkinter.CTkLabel(master=login, text="Пустой никнейм недопустим", text_color="red")
+            txtwarning = customtkinter.CTkLabel(master=login, text="An empty nickname cannot be used", text_color="red")
             txtwarning.pack(fill=customtkinter.BOTH, padx=10, pady=(10, 10))
             loginwarning_counter = False
         else:
             print("Warning is already visible")
     else:
         ui_nickname = nickname
+
         encrypted_nickname = encrypt_aes(nickname, aes_key)
         print("ENcRYPTED_NIcK" + str(encrypted_nickname))
         client_socket.send(encrypted_nickname)
@@ -87,75 +113,147 @@ def get_nickname_ui():
         login.withdraw()
 
 def login_ui():
-    global login, nick_entry
+    global login, nick_entry, ip_entry, port_entry
     login = customtkinter.CTk()
     login.title("Login")
-    login.geometry("250x200")
+    login.geometry("300x300")
     login.resizable(False, False)
-    nick_entry = customtkinter.CTkEntry(master=login, placeholder_text="Введите ваш никнейм")
+    ip_entry = customtkinter.CTkEntry(master=login, placeholder_text="Enter ip here")
+    ip_entry.pack(fill=customtkinter.BOTH, padx=10, pady=(10, 5))
+    port_entry = customtkinter.CTkEntry(master=login, placeholder_text="Enter port here")
+    port_entry.pack(fill=customtkinter.BOTH, padx=10, pady=(10, 5))
+    nick_entry = customtkinter.CTkEntry(master=login, placeholder_text="Enter your nickname")
     nick_entry.pack(fill=customtkinter.BOTH, padx=10, pady=(10, 5))
-    nick_button = customtkinter.CTkButton(master=login, width=60, height=32, border_width=0, corner_radius=8, text="Войти", command=get_nickname_ui)
+    nick_button = customtkinter.CTkButton(master=login, width=60, height=32, border_width=0, corner_radius=8, text="Join", command=get_nickname_ui)
     nick_button.pack(fill=customtkinter.BOTH, padx=10, pady=(5, 10))
     login.bind('<Return>', (lambda event: get_nickname_ui()))
     main.withdraw()
 
 def main_ui():
-    global main, login, chat_entry, client_socket, txt
+    global main, login, chat_entry, client_socket, txt, client_list_frame
     main = customtkinter.CTk()
-    main.geometry("600x500")
+    #main.geometry("800x500")
     main.title("ShadowTalk")
     main.resizable(False, False)
+    sidebar_frame = customtkinter.CTkFrame(main, width=200, height=470)
+    sidebar_frame.grid(row=0, column=0, sticky="ns", padx=5, pady=5)
+    general_chat_button = customtkinter.CTkButton(sidebar_frame, text="General", command=lambda: select_client(None))
+    general_chat_button.pack(fill=customtkinter.BOTH, padx=5, pady=5)
+    client_list_frame = customtkinter.CTkFrame(sidebar_frame, width=190, height=400)
+    client_list_frame.pack(fill=customtkinter.BOTH, padx=5, pady=5)
     txt = customtkinter.CTkTextbox(main, width=600, height=470)
-    txt.grid(row=0, column=1, columnspan=2)
-    scrollbar = customtkinter.CTkScrollbar(txt, command=txt.yview)
-    scrollbar.place(relheight=1, relx=0.974, rely=0)
-    txt.configure(yscrollcommand=scrollbar.set)
+    txt.configure(state="disabled")
+    txt.grid(row=0, column=1, columnspan=2, padx=5, pady=5)
     chat_entry = customtkinter.CTkEntry(main, width=550, height=30)
-    chat_entry.grid(row=2, column=0, columnspan=2)
+    chat_entry.grid(row=1, column=1, padx=5, pady=5)
     main.bind('<Return>', (lambda event: send_msgs(client_socket)))
-    send_button = customtkinter.CTkButton(main, text="Send", command=lambda: send_msgs(client_socket), width=50, height=30).grid(row=2, column=2, sticky="se")
+    send_button = customtkinter.CTkButton(main, text="Send", command=lambda: send_msgs(client_socket), width=50, height=30)
+    send_button.grid(row=1, column=2, padx=5, pady=5)
+
+def update_client_list(new_client_list):
+    global client_list_frame, current_client_list
+    if set(new_client_list) == set(current_client_list):
+        return
+    new_clients = set(new_client_list) - set(current_client_list)
+    current_client_list = new_client_list
+    for widget in client_list_frame.winfo_children():
+        widget.destroy()
+    for client in current_client_list:
+        if client != ui_nickname:
+            btn = customtkinter.CTkButton(client_list_frame, text=client, command=lambda c=client: select_client(c))
+            btn.pack(fill=customtkinter.BOTH, padx=5, pady=5)
+    if new_clients:
+        print(f"New clients got connected: {', '.join(new_clients)}")
+        
+
+def select_client(client):
+    global selected_client
+    selected_client = client
+    txt.configure(state="normal")
+    if client:
+        txt.insert("end", f" Chat with {client} selected\n")
+    else:
+        txt.insert("end", "General chat selected\n")
+    txt.configure(state="disabled")
+
+stop_threads = False
 
 def receive_msgs(client_socket):
-    while True:
+    global stop_threads
+    while not stop_threads:
         try:
             encrypted_message = client_socket.recv(1024)
-            print("ENcRYPTED_REcV" + str(encrypted_message))
             if not encrypted_message:
-                print("Сервер отключился")
-                message_queue.put("Отключено от сервера\n")
+                print("The server went down")
+                message_queue.put("You got disconnected from the server\n")
                 break
+
             message = decrypt_aes(encrypted_message, aes_key)
-            message_queue.put(f"{message}\n")
+            if message.startswith("CLIENT_LIST:"):
+                client_list = message.split(":")[1].split(",")
+                update_client_list(client_list)
+            elif message.startswith("PRIVATE:"):
+                parts = message.split(":")
+                if len(parts) >= 3:
+                    sender = parts[1]
+                    private_message = parts[2]
+                    message_queue.put(f"Private from {sender}: {private_message}\n")
+                else:
+                    print(f"Incorrect private message: {message}")
+            else:
+                message_queue.put(f"{message}\n")
         except Exception as e:
-            print(f"Ошибка при получении сообщения: {e}")
-            message_queue.put("Ошибка при получении сообщения\n")
+            print(f"Error when trying to get a message: {e}")
+            message_queue.put("Error when trying to get a message\n")
             break
     client_socket.close()
 
+def on_closing():
+    global stop_threads
+    stop_threads = True
+    main.quit()
+    login.quit()
+    print("APP IS DESTROYED")
+
 def send_msgs(client_socket):
-    global ui_nickname, message, chat_entry, txt
+    global ui_nickname, message, chat_entry, txt, selected_client
     message = str(chat_entry.get())
     if message.strip():
         try:
-            encrypted_message = encrypt_aes(f"{ui_nickname}: {message}", aes_key)
-            print("ENcRYPTED_SEND" + str(encrypted_message))
-            client_socket.send(encrypted_message)
-            txt.insert("end", f"{ui_nickname}: {message}\n")
+            if selected_client:
+                encrypted_message = encrypt_aes(f"PRIVATE:{selected_client}:{message}", aes_key)
+                client_socket.send(encrypted_message)
+                txt.configure(state="normal")
+                txt.insert("end", f"{ui_nickname} (to {selected_client}): {message}\n")
+                txt.configure(state="disabled")
+            else:
+                encrypted_message = encrypt_aes(f"{message}", aes_key)
+                client_socket.send(encrypted_message)
+                txt.configure(state="normal")
+                txt.insert("end", f"{ui_nickname}: {message}\n")
+                txt.configure(state="disabled")
             chat_entry.delete(0, "end")
         except Exception as e:
-            print(f"Ошибка при отправке сообщения: {e}")
+            print(f"Error when trying to send a message: {e}")
             client_socket.close()
-            txt.insert("end", "Ошибка при отправке сообщения\n")
+            txt.configure(state="normal")
+            txt.insert("end", "Error when trying to send a message\n")
+            txt.configure(state="disabled")
 
 def process_queue():
+    if not main.winfo_exists():
+        return
     while not message_queue.empty():
         message = message_queue.get()
-        txt.insert("end", message)
-    main.after(100, process_queue)  # Проверяем очередь каждые 100 мс
+        if txt.winfo_exists():
+            txt.configure(state="normal")
+            txt.insert("end", message)
+            txt.configure(state="disabled")
+    main.after(100, process_queue)
 
 def on_closing():
-    main.destroy()
-    login.destroy()
+    main.quit()
+    login.quit()
     print("APP IS DESTROYED")
 
 def main():
@@ -175,7 +273,7 @@ def main():
     login_ui()
     client_hndlr_recv = threading.Thread(target=receive_msgs, args=(client_socket,), daemon=True)
     client_hndlr_recv.start()
-    main.after(100, process_queue)  # Запускаем обработку очереди
+    main.after(100, process_queue)
     main.protocol("WM_DELETE_WINDOW", on_closing)
     login.protocol("WM_DELETE_WINDOW", on_closing)
     main.mainloop()
