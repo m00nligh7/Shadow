@@ -5,7 +5,7 @@ Shadow is secure, privacy and confidence messenger, what keeps your chats and no
 - [x] Login menu
 - [x] Base of the messenger
 - [x] End-to-end encryption (hybrid encryption)
-- [ ] Private chat messaging (there's only one general chat for everyone)
+- [x] Private chat messaging (there's only one general chat for everyone)
 - [ ] Support for sending files, media (video, audio, etc.) and adding support for file encryption.
 - [ ] Emojis (menu)
 - [ ] Stickers (menu)
