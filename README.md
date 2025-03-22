@@ -1,5 +1,9 @@
 # Shadow
 Shadow is secure, privacy and confidence messenger, what keeps your chats and no one have access to them.
+<p align="center">
+  <img src="screenshots/scrnshot1.png" width="720" title="Screenshot #1">
+</p>
+
 
 # TODO
 - [x] Login menu
