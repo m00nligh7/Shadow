@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import os
 import queue
+import platform
 
 ui_nickname = ""
 loginwarning_counter = True
@@ -20,6 +21,8 @@ selected_client = None
 current_client_list = []
 client_list_frame = None
 hidden_emojiframe = True 
+os_name = platform.system()
+
 
 message_queue = queue.Queue()
 
@@ -140,7 +143,7 @@ def emoji_frame():
         hidden_emojiframe = True
 
 def load_emojis():
-    global sidebar_frame_emoji, chat_entry
+    global sidebar_frame_emoji, chat_entry, os_name
     for widget in sidebar_frame_emoji.winfo_children():
         widget.destroy()
 
@@ -201,20 +204,13 @@ def load_emojis():
                     "🏸", "🏒", "🏑", "🥍", "🏏", "🪃",
                     "🥅", "⛳️", "🏹", "🎣", "🤿", "🥊",
                     "🥋", "🎽", "🛹", "🛼", "🛷", "⛸️",
-                    "🥌", "🎿", "⛷️", "🏂", "🪂", "🏋️‍♀️",
-                    "🏋️", "🏋️‍♂️", "🤼‍♀️", "🤼", "🤼‍♂️", "🤸‍♀️",
-                    "🤸", "🤸‍♂️", "⛹️‍♀️", "⛹️", "⛹️‍♂️", "🤺",
-                    "🤾‍♀️", "🤾", "🤾‍♂️", "🏌️‍♀️", "🏌️", "🏌️‍♂️",
-                    "🏇", "🧘‍♀️", "🧘", "🧘‍♂️", "🏄‍♀️", "🏄",
-                    "🏄‍♂️", "🏊‍♀️", "🏊", "🏊‍♂️", "🤽‍♀️", "🤽",
-                    "🤽‍♂️", "🚣‍♀️", "🚣", "🚣‍♂️", "🧗‍♀️", "🧗",
-                    "🧗‍♂️", "🚵‍♀️", "🚵", "🚵‍♂️", "🚴‍♀️", "🚴",
-                    "🚴‍♂️", "🏆", "🥇", "🥈", "🥉", "🏅",
-                    "🎖️", "🏵️", "🎗️", "🎫", "🎟️", "🎪",
-                    "🤹‍♀️", "🤹", "🤹‍♂️", "🎭", "🩰", "🎨",
-                    "🎬", "🎤", "🎧", "🎼", "🎹", "🥁",
-                    "🪘", "🎷", "🎺", "🎸", "🪕", "🎻",
-                    "🎲", "♟️", "🧩", "🎯", "🎳", "🎮"],
+                    "🥌", "🎿", "⛷️", "🏂", "🪂", "🏆",
+                    "🥇", "🥈", "🥉", "🏅", "🎖️", "🏵️",
+                    "🎗️", "🎫", "🎟️", "🎪", "🎭", "🩰",
+                    "🎨", "🎬", "🎤", "🎧", "🎼", "🎹",
+                    "🥁", "🪘", "🎷", "🎺", "🎸", "🪕",
+                    "🎻", "🎲", "♟️", "🧩", "🎯", "🎳",
+                    "🎮"],
         "Travel": ["🚗", "🚕", "🚙", "🚌", "🚎", "🏎️",
                 "🚓", "🚑", "🚒", "🚐", "🚚", "🚛",
                 "🚜", "🦯", "🦽", "🦼", "🛴", "🚲",
@@ -265,15 +261,7 @@ def load_emojis():
                 "💲", "⚕️", "♻️", "⚜️", "🔱", "📛",
                 "🔰", "⭕️", "✅", "☑️", "✔️", "❌",
                 "❎", "➰", "➿", "〽️", "✳️", "✴️",
-                "❇️", "©️", "®️", "™️", "#️⃣", "*️⃣",
-                "0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣",
-                "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟", "🔠",
-                "🔡", "🔢", "🔣", "🔤", "🅰️", "🆎",
-                "🅱️", "🆑", "🆒", "🆓", "ℹ️", "🆔",
-                "Ⓜ️", "🆕", "🆖", "🆗", "🆘", "🆙",
-                "🆚", "🈁", "🈂️", "🈷️", "🈶", "🈯️",
-                "🉐", "🈹", "🈚️", "🈲", "🉑", "🈸",
-                "🈴", "🈳", "㊗️", "㊙️", "🈺", "🈵",
+                "❇️", "©️", "®️", "™️",
                 "🔴", "🟠", "🟡", "🟢", "🔵", "🟣",
                 "🟤", "⚫️", "⚪️", "🟥", "🟧", "🟨",
                 "🟩", "🟦", "🟪", "🟫", "⬛️", "⬜️",
@@ -293,10 +281,19 @@ def load_emojis():
         emoji_frame.pack(fill=customtkinter.BOTH, padx=5, pady=5)
 
         for emoji in emojis:
+            if os_name == "Windows":
+                font = "Segoe UI Emoji"
+            elif os_name == "Linux":
+                font = "Noto Color Emoji"
+            elif os_name == "Darwin":
+                font = "Apple Color Emoji"
+            else:
+                print("Error: Theres unknown OS for me")
+            
             emoji_button = customtkinter.CTkButton(
                 emoji_frame,
                 text = emoji,
-                font = ("Arial", 16),
+                font = (font, 16),
                 width = 30,
                 height = 30,
                 fg_color = "transparent",
@@ -340,7 +337,7 @@ def main_ui():
     #main.geometry("830x540")
     main.title("Shadow")
     main.resizable(False, False)
-    sidebar_frame = customtkinter.CTkFrame(main, width=180, height=470)
+    sidebar_frame = customtkinter.CTkScrollableFrame(main, width=180, height=470)
     sidebar_frame.grid(row=0, column=0, sticky="ns", padx=5, pady=5)
     general_chat_button = customtkinter.CTkButton(sidebar_frame, text="General", command=lambda: select_client(None), width = 180)
     general_chat_button.pack(fill=customtkinter.BOTH, padx=5, pady=5)
