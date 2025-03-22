@@ -110,6 +110,7 @@ def get_nickname_ui():
             print("Warning is already visible")
     else:
         ui_nickname = nickname
+        main.title("Shadow " + f"[{nickname}]")
         try:
             port = int(port)
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
