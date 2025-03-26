@@ -1,4 +1,8 @@
+cffi==1.17.1
+cryptography==44.0.1
 customtkinter==5.2.2
 darkdetect==0.8.0
 packaging==24.2
+pillow==11.1.0
+pycparser==2.22
 sockets==1.0.0
